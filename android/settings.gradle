@@ -1,0 +1,3 @@
+rootProject.name = 'react-native-humanapi'
+
+include ':humanapi-sdk'

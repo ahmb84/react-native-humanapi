@@ -1,0 +1,8 @@
+rootProject.name = 'Example'
+
+include ':app'
+include ':react-native-humanapi'
+include ':humanapi-sdk'
+
+project(':react-native-humanapi').projectDir = new File(rootProject.projectDir, '../../android')
+project(':humanapi-sdk').projectDir = new File(rootProject.projectDir, '../../android/humanapi-sdk')
