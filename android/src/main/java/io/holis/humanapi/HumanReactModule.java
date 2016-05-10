@@ -15,19 +15,26 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ActivityEventListener;
+import com.facebook.react.bridge.Arguments;
+import com.facebook.react.bridge.WritableMap;
 
-public class HumanReactModule extends ReactContextBaseJavaModule {
+public class HumanReactModule extends ReactContextBaseJavaModule implements ActivityEventListener{
   private final static String TAG = HumanReactModule.class.getName();
 
   private final static String REACT_MODULE_NAME = "HumanReactModule";
   private final static int HUMANAPI_AUTH = 1;
+  private final static int RESULT_OK = -1;
   private final static int RESULT_CANCELED = 0;
-  private final static int RESULT_OK = 1;
+  private final static int RESULT_FIRST_USER = 1;
 
   private Callback humanCallback;
 
   public HumanReactModule(ReactApplicationContext reactApplicationContext) {
     super(reactApplicationContext);
+
+    // Add the listener for `onActivityResult`
+    reactApplicationContext.addActivityEventListener(this);
   }
 
   /**
@@ -43,6 +50,7 @@ public class HumanReactModule extends ReactContextBaseJavaModule {
     */
     @ReactMethod
     public void onConnect(@Nullable ReadableMap options, Callback callback) {
+        Log.d("hapi-home", "callback " + callback);
         humanCallback = callback;
 
         ConnectOptions connectOptions = new ConnectOptions(options);
@@ -58,23 +66,56 @@ public class HumanReactModule extends ReactContextBaseJavaModule {
 
         intent.putExtras(connectOptions.getBundle());
 
-        activity.startActivity(intent);
+        activity.startActivityForResult(intent, HUMANAPI_AUTH);
     }
-/*
+
+    private boolean invokeCallback(int resultCode, Intent data) {
+        Log.d("hapi-home", "humanCallback " + humanCallback);
+        if (humanCallback == null) {
+            Log.e(TAG, "Invalid/old callback called!");
+            return false;
+        }
+
+        Log.d("hapi-home", "resultCode " + resultCode);
+        WritableMap dataMap = null;
+        if (resultCode == RESULT_FIRST_USER) {
+            if (data != null) {
+                Bundle b = data.getExtras();
+                dataMap = Arguments.createMap();
+                dataMap.putString("status", "auth");
+                dataMap.putString(ConnectOptions.CLIENT_ID, b.getString(ConnectOptions.CLIENT_ID));
+                dataMap.putString(ConnectOptions.HUMAN_ID, b.getString(ConnectOptions.HUMAN_ID));
+                dataMap.putString(ConnectOptions.SESSION_TOKEN, b.getString(ConnectOptions.SESSION_TOKEN));
+            }
+            Log.d("hapi-home", "auth " + dataMap);
+        } else if (resultCode == RESULT_OK) {
+            if (data != null) {
+                Bundle b = data.getExtras();
+                dataMap = Arguments.createMap();
+                dataMap.putString("status", "success");
+                dataMap.putString(ConnectOptions.PUBLIC_TOKEN, b.getString(ConnectOptions.PUBLIC_TOKEN));
+            }
+            Log.d("hapi-home", "success " + dataMap);
+        } else if (resultCode == RESULT_CANCELED) {
+            dataMap = Arguments.createMap();
+            dataMap.putString("status", "cancel");
+
+            Log.d("hapi-home", "cancel " + dataMap);
+        }
+        Log.d("hapi-home", "invoke!");
+        humanCallback.invoke(dataMap);
+        humanCallback = null;
+
+        return true;
+    }
+
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d("hapi-home", "requestCode " + requestCode);
         if (requestCode != HUMANAPI_AUTH) {
             return; // incorrect code
         }
-        Log.d("hapi-home", "resultCode: " + resultCode);
-        if (resultCode == RESULT_OK) {
-            Log.d("hapi-home", "Authorization workflow completed");
-            Bundle b = data.getExtras();
-            Log.d("hapi-home", ".. public_token=" + b.getString("public_token"));
-
-
-        } else if (resultCode == RESULT_CANCELED) {
-            Log.d("hapi-home", "Authorization workflow cancelled");
-        }
-    }*/
+        Log.d("hapi-home", "invokeCallback");
+        invokeCallback(resultCode, data);
+    }
 }

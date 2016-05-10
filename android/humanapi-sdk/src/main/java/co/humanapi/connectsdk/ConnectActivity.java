@@ -207,16 +207,23 @@ public class ConnectActivity extends Activity {
         data.put("sessionToken", sessionToken);
         Log.d("hapi-auth", "jsonObject=" + new JSONObject(data));
 
-
-        try {
-            JSONResource res = resty.json(authURL, resty.content(new JSONObject(data)));
-            Log.d("hapi-auth", "result = " + res.toString());
-            Intent intent = new Intent();
-            intent.putExtra("public_token", res.get("publicToken").toString());
-            setResult(RESULT_OK, intent);
-        } catch (Exception e) {
-            Log.e("hapi-auth", e.toString());
-            setResult(RESULT_CANCELED);
+        if (authURL.trim().length() == 0) {
+          Intent intent = new Intent();
+          intent.putExtra("client_id", clientId);
+          intent.putExtra("human_id", humanId);
+          intent.putExtra("session_token", sessionToken);
+          setResult(RESULT_FIRST_USER, intent);
+        } else {
+          try {
+              JSONResource res = resty.json(authURL, resty.content(new JSONObject(data)));
+              Log.d("hapi-auth", "result = " + res.toString());
+              Intent intent = new Intent();
+              intent.putExtra("public_token", res.get("publicToken").toString());
+              setResult(RESULT_OK, intent);
+          } catch (Exception e) {
+              Log.e("hapi-auth", e.toString());
+              setResult(RESULT_CANCELED);
+          }
         }
         finish();
     }

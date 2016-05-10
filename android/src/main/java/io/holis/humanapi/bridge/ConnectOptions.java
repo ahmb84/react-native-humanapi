@@ -9,11 +9,13 @@ import com.facebook.react.bridge.ReadableMap;
 public class ConnectOptions {
     private static final String TAG = ConnectOptions.class.getName();
 
-    private static final String CLIENT_ID = "client_id";
-    private static final String AUTH_URL = "auth_url";
-    private static final String CLIENT_USER_ID = "client_user_id";
-    private static final String LANGUAGE = "language";
-    private static final String PUBLIC_TOKEN = "public_token";
+    public static final String CLIENT_ID = "client_id";
+    public static final String AUTH_URL = "auth_url";
+    public static final String CLIENT_USER_ID = "client_user_id";
+    public static final String LANGUAGE = "language";
+    public static final String PUBLIC_TOKEN = "public_token";
+    public static final String HUMAN_ID = "human_id";
+    public static final String SESSION_TOKEN = "session_token";
 
     private String clientID = "";
     private String authURL = "";

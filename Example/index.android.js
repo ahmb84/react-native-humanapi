@@ -14,12 +14,28 @@ import {
 } from 'react-native';
 
 class Example extends Component {
+  sendAuth = (data) => {
+    // send for auth_url with additional info
+    console.log('auth')
+    console.log(data)
+    // data.client_id
+    // data.human_id
+    // data.session_token
+  }
   connectHumanAPI = () => {
     const humanAPI = new HumanAPI()
-    humanAPI.onConnect({
+    const options = {
       client_id: '6346b1a5dbd7399e0cc15a708620133a38574630',
       client_user_id: 'wayne@holis.io',
-    }, () => console.log('Done'))
+      // custom auth handle without auth_url
+      auth: (data) => this.sendAuth(data),
+      /* default auth_url handle
+      auth_url: 'AUTH_URL',
+      success: (data) => console.log(data.public_token)  // callback when success with auth_url
+      */
+      cancel: () => console.log('cancel')  // callback when cancel
+    }
+    humanAPI.onConnect(options)
   }
   render() {
     return (
