@@ -263,56 +263,82 @@ CGFloat NavbarHeight = 54;
     }
     NSLog(@"found humanId=%@, sessionToken=%@", humanId, sessionToken);
     
-    
-    //POST sessionTokenObject to authURL
-    NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration ephemeralSessionConfiguration];
-    [sessionConfig setHTTPAdditionalHeaders:@{@"Content-Type": @"application/json"}];
-    
-    NSURLSession *urlSession = [NSURLSession sessionWithConfiguration:sessionConfig];
-    
-    NSMutableURLRequest *request =
-    [[NSMutableURLRequest alloc] initWithURL: [[NSURL alloc] initWithString:self.authURL]];
-    [request setHTTPMethod:@"POST"];
-    
-    NSDictionary *sessionTokenObject = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                        humanId, @"humanId",
-                                        self.clientID, @"clientId",
-                                        sessionToken, @"sessionToken",
-                                        nil];
-    
-    NSData *postData = [NSJSONSerialization dataWithJSONObject:sessionTokenObject options:0 error: nil];
-    
-    NSURLSessionUploadTask *postTask =
-    [urlSession uploadTaskWithRequest:request
-                             fromData:postData
-                    completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
-     {
-         NSHTTPURLResponse *httpResp = (NSHTTPURLResponse*) response;
-         
-         if (!error && (httpResp.statusCode == 200 || httpResp.statusCode == 201)) {
-             NSDictionary *res = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
-             NSLog(@"response from server: %@", res);
-             [self dismiss];
-             NSString * publicToken = res[@"publicToken"];
-             [self fireConnectSuccessWithPublicToken: publicToken != NULL ? publicToken : @"" ];
-         } else {
-             NSLog(@"Error: %@", error);
-             [self dismiss];
-             [self fireConnectFailureWithError:[NSString stringWithFormat:@"error POSTing sessionTokenObject to server endpoint: %@",self.authURL]];
+    if (self.authURL == nil || [self.authURL length] == 0) {
+        [self fireConnectAuth: humanId andClientId:self.clientID andSessionToken:sessionToken];
+        
+    } else {
+        //POST sessionTokenObject to authURL
+        NSURLSessionConfiguration *sessionConfig = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+        [sessionConfig setHTTPAdditionalHeaders:@{@"Content-Type": @"application/json"}];
+        
+        NSURLSession *urlSession = [NSURLSession sessionWithConfiguration:sessionConfig];
+        
+        NSMutableURLRequest *request =
+        [[NSMutableURLRequest alloc] initWithURL: [[NSURL alloc] initWithString:self.authURL]];
+        [request setHTTPMethod:@"POST"];
+        
+        NSDictionary *sessionTokenObject = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                            humanId, @"humanId",
+                                            self.clientID, @"clientId",
+                                            sessionToken, @"sessionToken",
+                                            nil];
+        
+        NSData *postData = [NSJSONSerialization dataWithJSONObject:sessionTokenObject options:0 error: nil];
+        
+        NSURLSessionUploadTask *postTask =
+        [urlSession uploadTaskWithRequest:request
+                                 fromData:postData
+                        completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable error)
+         {
+             NSHTTPURLResponse *httpResp = (NSHTTPURLResponse*) response;
              
-         }
-     }];
+             if (!error && (httpResp.statusCode == 200 || httpResp.statusCode == 201)) {
+                 NSDictionary *res = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+                 NSLog(@"response from server: %@", res);
+                 [self dismiss];
+                 NSString * publicToken = res[@"publicToken"];
+                 [self fireConnectSuccessWithPublicToken: publicToken != NULL ? publicToken : @"" ];
+             } else {
+                 NSLog(@"Error: %@", error);
+                 [self dismiss];
+                 [self fireConnectFailureWithError:[NSString stringWithFormat:@"error POSTing sessionTokenObject to server endpoint: %@",self.authURL]];
+                 
+             }
+         }];
+        
+        [postTask resume];
+    }
     
-    [postTask resume];
-    
+}
+
+/** Calls connect auth method in delegate */
+- (void)fireConnectAuth:(NSString *)humanId andClientId:(NSString *)clientId andSessionToken:(NSString *)sessionToken
+{
+    NSDictionary *data = @{
+                            @"status": @"auth",
+                            @"human_id": humanId,
+                            @"client_id" : clientId,
+                            @"session_token" : sessionToken,
+                            };
+    id<HumanAPINotifications> delegate = self.delegate;
+    if ([delegate respondsToSelector:@selector(onConnectSuccess:)]) {
+        [delegate onConnectSuccess:data];
+        [self dismiss];
+    }
 }
 
 /** Calls connect success method in delegate */
 - (void)fireConnectSuccessWithPublicToken:(NSString *)publicToken
 {
+    
+    NSDictionary *data = @{
+                           @"status": @"success",
+                           @"public_token": publicToken,
+                           };
     id<HumanAPINotifications> delegate = self.delegate;
     if ([delegate respondsToSelector:@selector(onConnectSuccess:)]) {
-        [delegate onConnectSuccess:publicToken];
+        [delegate onConnectSuccess:data];
+        [self dismiss];
     }
 }
 

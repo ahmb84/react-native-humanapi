@@ -15,8 +15,7 @@ class HumanAPI {
             options.success(data)
           break
         default:
-          if (options.cancel)
-            options.cancel()
+          options.cancel()
           break
       }
     }
