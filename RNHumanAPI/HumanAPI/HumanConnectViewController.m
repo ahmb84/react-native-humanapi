@@ -238,7 +238,7 @@ CGFloat NavbarHeight = 54;
         paramsString = [paramsString stringByAppendingString:[NSString stringWithFormat: @"&%@=%@",key,[params objectForKey:key]]];
     }
     
-    NSURL *url = [NSURL URLWithString:[HumanAPIConnectURL stringByAppendingString:paramsString]];
+    NSURL *url = [NSURL URLWithString:[[HumanAPIConnectURL stringByAppendingString:paramsString] stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
     return url;
 }
 

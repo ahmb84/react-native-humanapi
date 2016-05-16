@@ -28,7 +28,7 @@ RCT_REMAP_METHOD(onConnect, connectOptions:(NSDictionary *)options callback:(RCT
         hcvc.delegate = self;
         [root presentViewController:hcvc animated:YES completion:nil];
         
-        if (publicToken) {
+        if (publicToken && [publicToken length] > 0) {
             [hcvc startConnectFlowFor: clientUserId
                        andPublicToken: publicToken];
             
